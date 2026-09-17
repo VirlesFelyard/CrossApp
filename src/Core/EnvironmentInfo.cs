@@ -40,4 +40,10 @@ public static class EnvironmentInfo
 
         return $"{os}-{arch}";
     }
+    public static string BuildNote =>
+#if NET9_0_OR_GREATER
+        "збірка під net9.0";
+#else
+    "збірка під net8.0";
+#endif
 }
