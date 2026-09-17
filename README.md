@@ -1,12 +1,41 @@
-# CrossApp 
-Наскрізний проєкт з крос-платформного програмування. 
-Предметна область: Бібліотека. Сутності: Book, BookCopy, Reader, Loan. 
-Призначення: Застосунок призначений для обліку примірників книг, читачів, їх видачі та повернення. 
-## Порівняння self-contained під ДВІ різні RID
-win-x64 - 153 MB
-linux-x64 - 157 MB
-## Запуск 
-dotnet build 
-dotnet run --project src/Cli 
-## Середовище 
-.NET SDK: 10.0.400,  Windows 11 x64 RID: win-x64
+п»ї# CrossApp
+
+РќР°СЃРєСЂС–Р·РЅРёР№ РїСЂРѕС”РєС‚ Р· РєСЂРѕСЃ-РїР»Р°С‚С„РѕСЂРјРЅРѕРіРѕ РїСЂРѕРіСЂР°РјСѓРІР°РЅРЅСЏ.
+
+РџСЂРµРґРјРµС‚РЅР° РѕР±Р»Р°СЃС‚СЊ: Р‘С–Р±Р»С–РѕС‚РµРєР°. РЎСѓС‚РЅРѕСЃС‚С–: Book, BookCopy, Reader, Loan.
+
+РџСЂРёР·РЅР°С‡РµРЅРЅСЏ: РѕР±Р»С–Рє РїСЂРёРјС–СЂРЅРёРєС–РІ РєРЅРёРі, С‡РёС‚Р°С‡С–РІ, С—С… РІРёРґР°С‡С– С‚Р° РїРѕРІРµСЂРЅРµРЅРЅСЏ.
+
+## РЎС‚СЂСѓРєС‚СѓСЂР° solution
+
+```
+CrossApp/
+в”њв”Ђв”Ђ CrossApp.sln
+в”њв”Ђв”Ђ global.json
+в”њв”Ђв”Ђ README.md
+в”њв”Ђв”Ђ .gitignore
+в””в”Ђв”Ђ src/
+    в”њв”Ђв”Ђ Core/
+    в”‚   в”њв”Ђв”Ђ Core.csproj
+    в”‚   в””в”Ђв”Ђ EnvironmentInfo.cs
+    в””в”Ђв”Ђ Cli/
+        в”њв”Ђв”Ђ Cli.csproj
+        в””в”Ђв”Ђ Program.cs
+```
+
+## РљРѕРјР°РЅРґРё
+
+```
+dotnet build
+dotnet run --project src/Cli
+
+dotnet publish src/Cli -c Release -r win-x64 --self-contained true
+dotnet publish src/Cli -c Release -r win-x64 --self-contained false
+```
+
+## РџРѕСЂС–РІРЅСЏРЅРЅСЏ СЂРµР¶РёРјС–РІ РїСѓР±Р»С–РєР°С†С–С—
+
+| RID     | Р РµР¶РёРј               | Р РѕР·РјС–СЂ publish | РџРѕС‚СЂС–Р±РµРЅ runtime |
+|---------|---------------------|----------------|------------------|
+| win-x64 | self-contained      | 70.6 РњР‘        | РЅС–               |
+| win-x64 | framework-dependent | 184 РљР‘         | С‚Р°Рє (.NET 8)     |
