@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 
 namespace Core;
-// РєРѕСЂС–РЅРЅРёР№ namespace = С–Рј'СЏ РїСЂРѕС”РєС‚Сѓ Core
 
 public sealed record EnvironmentReport(
     string OsDescription,
@@ -21,7 +20,6 @@ public static class EnvironmentInfo
         RuntimeInformation.RuntimeIdentifier,
         AppContext.BaseDirectory);
 
-    // Р СѓС‡РЅРµ РІРёР·РЅР°С‡РµРЅРЅСЏ RID: РїРѕРєР°Р·СѓС”, Р· С‡РѕРіРѕ СЃРєР»Р°РґР°С”С‚СЊСЃСЏ СЂСЏРґРѕРє win-x64.
     private static string DetectRid()
     {
         string os =
@@ -40,10 +38,11 @@ public static class EnvironmentInfo
 
         return $"{os}-{arch}";
     }
+
     public static string BuildNote =>
 #if NET9_0_OR_GREATER
-        "Р·Р±С–СЂРєР° РїС–Рґ net9.0";
+        "збірка під net9.0";
 #else
-    "Р·Р±С–СЂРєР° РїС–Рґ net8.0";
+        "збірка під net8.0";
 #endif
 }
