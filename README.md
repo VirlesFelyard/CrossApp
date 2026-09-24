@@ -9,15 +9,24 @@
 ## Структура solution
 
 ```
+## Структура solution
+
 CrossApp/
 ├── CrossApp.sln
 ├── global.json
 ├── README.md
 ├── .gitignore
+├── data/
+│   └── sample.csv
 └── src/
     ├── Core/
     │   ├── Core.csproj
-    │   └── EnvironmentInfo.cs
+    │   ├── EnvironmentInfo.cs
+    │   ├── Dto/
+    │   │   ├── BookDto.cs
+    │   │   └── ImportResult.cs
+    │   └── Import/
+    │       └── BookCsvImporter.cs
     └── Cli/
         ├── Cli.csproj
         └── Program.cs

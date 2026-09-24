@@ -41,7 +41,7 @@ public static class EnvironmentInfo
 
     public static string BuildNote =>
 #if NET9_0_OR_GREATER
-        "збірка під net9.0";
+        "збірка під net10.0";
 #else
         "збірка під net8.0";
 #endif
