@@ -11,5 +11,5 @@ public sealed record ImportResult<T>(
         Total == 0 ? 0 : (double)Skipped / Total * 100;
 
     public string Statistics =>
-        $"Усього: {Total} | Прийнято: {Accepted} | Пропущено: {Skipped} | % помилок: {ErrorPercentage:F1}%";
+        $"РЈСЃСЊРѕРіРѕ: {Total} | РџСЂРёР№РЅСЏС‚Рѕ: {Accepted} | РџСЂРѕРїСѓС‰РµРЅРѕ: {Skipped} | % РїРѕРјРёР»РѕРє: {ErrorPercentage:F1}%";
 }

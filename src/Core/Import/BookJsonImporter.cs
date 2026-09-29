@@ -18,7 +18,7 @@ public static class BookJsonImporter
         {
             return new ImportResult<BookDto>(
                 [],
-                ["JSON повинен містити масив об'єктів"],
+                ["JSON РїРѕРІРёРЅРµРЅ РјС–СЃС‚РёС‚Рё РјР°СЃРёРІ РѕР±'С”РєС‚С–РІ"],
                 0,
                 0,
                 0);
@@ -37,7 +37,7 @@ public static class BookJsonImporter
                 if (element.ValueKind != JsonValueKind.Object)
                 {
                     errors.Add(
-                        $"елемент {lineNumber}: очікую JSON-об'єкт");
+                        $"РµР»РµРјРµРЅС‚ {lineNumber}: РѕС‡С–РєСѓСЋ JSON-РѕР±'С”РєС‚");
 
                     continue;
                 }
@@ -51,7 +51,7 @@ public static class BookJsonImporter
                 if (book is null)
                 {
                     errors.Add(
-                        $"елемент {lineNumber}: не вдалося десеріалізувати книгу");
+                        $"РµР»РµРјРµРЅС‚ {lineNumber}: РЅРµ РІРґР°Р»РѕСЃСЏ РґРµСЃРµСЂС–Р°Р»С–Р·СѓРІР°С‚Рё РєРЅРёРіСѓ");
 
                     continue;
                 }
@@ -59,7 +59,7 @@ public static class BookJsonImporter
                 if (string.IsNullOrWhiteSpace(book.Id))
                 {
                     errors.Add(
-                        $"елемент {lineNumber}: ID порожній");
+                        $"РµР»РµРјРµРЅС‚ {lineNumber}: ID РїРѕСЂРѕР¶РЅС–Р№");
 
                     continue;
                 }
@@ -67,7 +67,7 @@ public static class BookJsonImporter
                 if (string.IsNullOrWhiteSpace(book.Isbn))
                 {
                     errors.Add(
-                        $"елемент {lineNumber}: ISBN порожній");
+                        $"РµР»РµРјРµРЅС‚ {lineNumber}: ISBN РїРѕСЂРѕР¶РЅС–Р№");
 
                     continue;
                 }
@@ -75,7 +75,7 @@ public static class BookJsonImporter
                 if (string.IsNullOrWhiteSpace(book.Title))
                 {
                     errors.Add(
-                        $"елемент {lineNumber}: назва порожня");
+                        $"РµР»РµРјРµРЅС‚ {lineNumber}: РЅР°Р·РІР° РїРѕСЂРѕР¶РЅСЏ");
 
                     continue;
                 }
@@ -83,7 +83,7 @@ public static class BookJsonImporter
                 if (book.Year < 1450 || book.Year > DateTime.Now.Year)
                 {
                     errors.Add(
-                        $"елемент {lineNumber}: рік '{book.Year}' поза допустимими межами");
+                        $"РµР»РµРјРµРЅС‚ {lineNumber}: СЂС–Рє '{book.Year}' РїРѕР·Р° РґРѕРїСѓСЃС‚РёРјРёРјРё РјРµР¶Р°РјРё");
 
                     continue;
                 }
@@ -93,12 +93,12 @@ public static class BookJsonImporter
             catch (JsonException ex)
             {
                 errors.Add(
-                    $"елемент {lineNumber}: помилка JSON: {ex.Message}");
+                    $"РµР»РµРјРµРЅС‚ {lineNumber}: РїРѕРјРёР»РєР° JSON: {ex.Message}");
             }
             catch (Exception ex)
             {
                 errors.Add(
-                    $"елемент {lineNumber}: {ex.Message}");
+                    $"РµР»РµРјРµРЅС‚ {lineNumber}: {ex.Message}");
             }
         }
 
