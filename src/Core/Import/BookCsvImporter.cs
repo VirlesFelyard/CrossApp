@@ -13,6 +13,9 @@ public static class BookCsvImporter
         var items = new List<BookDto>();
         var errors = new List<string>();
 
+        int total = 0;
+        int skipped = 0;
+
         string[] lines = File.ReadAllLines(path, Encoding.UTF8);
 
         for (int i = 0; i < lines.Length; i++)
@@ -29,6 +32,8 @@ public static class BookCsvImporter
                 continue;
             }
 
+            total++;
+
             switch (ParseLine(line))
             {
                 case ParseOk ok:
@@ -36,12 +41,18 @@ public static class BookCsvImporter
                     break;
 
                 case ParseFailed failed:
+                    skipped++;
                     errors.Add($"рядок {number}: {failed.Reason}");
                     break;
             }
         }
 
-        return new ImportResult<BookDto>(items, errors);
+        return new ImportResult<BookDto>(
+            items,
+            errors,
+            total,
+            items.Count,
+            skipped);
     }
 
     private static ParseOutcome ParseLine(string line)

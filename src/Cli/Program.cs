@@ -2,6 +2,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Core;
+using Core.Dto;
 using Core.Import;
 
 Console.OutputEncoding = Encoding.UTF8;
@@ -30,11 +31,51 @@ if (args.Contains("--json"))
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
-    Console.WriteLine(JsonSerializer.Serialize(systemInfo, options));
+    Console.WriteLine(
+        JsonSerializer.Serialize(systemInfo, options));
+}
+else if (args.Contains("--mixed"))
+{
+    string path = args
+        .FirstOrDefault(arg => !arg.StartsWith("--"))
+        ?? Path.Combine("data", "mixed.csv");
+
+    if (!File.Exists(path))
+    {
+        Console.WriteLine($"Помилка: файл не знайдено: {Path.GetFullPath(path)}");
+
+        return;
+    }
+
+    var items = MixedCsvImporter.Load(path);
+
+    Console.WriteLine($"Різнорідний файл: {path}");
+    Console.WriteLine($"Завантажено записів: {items.Count}");
+    Console.WriteLine();
+
+    foreach (var item in items)
+    {
+        switch (item)
+        {
+            case BookDto book:
+                Console.WriteLine(
+                    $"Book   | {book.Id} | {book.Isbn} | " +
+                    $"{book.Title} | {book.Year}");
+                break;
+
+            case ReaderDto reader:
+                Console.WriteLine(
+                    $"Reader | {reader.Id} | {reader.Name} | " +
+                    $"{reader.Email}");
+                break;
+        }
+    }
 }
 else
 {
-    Console.WriteLine("CrossApp – практикум з крос-платформного програмування");
+    Console.WriteLine(
+        "CrossApp – практикум з крос-платформного програмування");
+
     Console.WriteLine($"Студент: {systemInfo.student}");
     Console.WriteLine(new string('-', 52));
     Console.WriteLine($"ОС (OSDescription)   : {report.OsDescription}");
@@ -44,41 +85,75 @@ else
     Console.WriteLine($"RID (від .NET)       : {report.ReportedRid}");
     Console.WriteLine($"Каталог застосунку   : {report.BaseDirectory}");
     Console.WriteLine($"Збірка Core          : {EnvironmentInfo.BuildNote}");
+
     Console.WriteLine(new string('-', 52));
-    Console.WriteLine("Предметна область: Бібліотека (видання, примірники, читачі)");
+
+    Console.WriteLine(
+        "Предметна область: Бібліотека " +
+        "(видання, примірники, читачі)");
+
     Console.WriteLine();
 
-    string path = args.FirstOrDefault(arg => !arg.StartsWith("--"))
-                  ?? Path.Combine("data", "sample.csv");
+    string path = args
+        .FirstOrDefault(arg => !arg.StartsWith("--"))
+        ?? Path.Combine("data", "sample.csv");
 
-    Console.WriteLine($"CSV-файл: {path}");
+    Console.WriteLine($"Файл імпорту: {path}");
     Console.WriteLine();
 
     if (!File.Exists(path))
     {
-        Console.WriteLine($"Помилка: файл не знайдено: {path}");
+        Console.WriteLine(
+            $"Помилка: файл не знайдено: {Path.GetFullPath(path)}");
+
         return;
     }
 
-    var result = BookCsvImporter.Load(path);
+    var result = Path.GetExtension(path).ToLowerInvariant() switch
+    {
+        ".csv" => BookCsvImporter.Load(path),
 
-    Console.WriteLine($"Завантажено записів: {result.Items.Count}");
+        ".json" => BookJsonImporter.Load(path),
+
+        _ => new ImportResult<BookDto>(
+            [],
+            [
+                $"Непідтримуване розширення файлу: " +
+                $"{Path.GetExtension(path)}"
+            ],
+            0,
+            0,
+            0)
+    };
+
+    Console.WriteLine(
+        $"Завантажено записів: {result.Items.Count}");
+
+    Console.WriteLine(result.Statistics);
     Console.WriteLine();
 
-    Console.WriteLine("Перші записи:");
-
-    foreach (var book in result.Items.Take(5))
+    if (result.Items.Count > 0)
     {
-        Console.WriteLine(
-            $"{book.Id} | {book.Isbn} | {book.Title} | {book.Year} | Автор: {book.Author ?? "невідомий"}");
+        Console.WriteLine("Перші записи:");
+
+        foreach (BookDto book in result.Items.Take(5))
+        {
+            Console.WriteLine(
+                $"{book.Id} | " +
+                $"{book.Isbn} | " +
+                $"{book.Title} | " +
+                $"{book.Year} | " +
+                $"Автор: {book.Author ?? "невідомий"}");
+        }
     }
 
     if (result.Errors.Count > 0)
     {
         Console.WriteLine();
-        Console.WriteLine($"Помилки ({result.Errors.Count}):");
+        Console.WriteLine(
+            $"Помилки ({result.Errors.Count}):");
 
-        foreach (var error in result.Errors)
+        foreach (string error in result.Errors)
         {
             Console.WriteLine($"- {error}");
         }
