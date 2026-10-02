@@ -20,8 +20,13 @@ CrossApp/
     ├── Core/
     │   ├── Core.csproj
     │   ├── EnvironmentInfo.cs
+    │   ├── Domain/
+    │   │   ├── BookCopy.cs
+    │   │   └── Loan.cs
     │   ├── Dto/
     │   │   ├── BookDto.cs
+    │   │   ├── BookCopyDto.cs
+    │   │   ├── LoanDto.cs
     │   │   └── ImportResult.cs
     │   └── Import/
     │       └── BookCsvImporter.cs
@@ -29,6 +34,18 @@ CrossApp/
         ├── Cli.csproj
         └── Program.cs
 ```
+
+## Інваріанти предметної області
+
+- `BookCopy` має непорожні `Id` та `Isbn`.
+- `BookCopy` не можна повторно видати, якщо він уже виданий.
+- `BookCopy` не можна повернути, якщо він не виданий.
+- `Loan` має непорожні `Id`, `CopyId` та `ReaderId`.
+- Дата повернення не може бути раніше дати видачі.
+- Завершену видачу не можна закрити повторно.
+- Порушення параметрів викликає `ArgumentException` або `ArgumentOutOfRangeException`.
+- Порушення стану об'єкта викликає `InvalidOperationException`.
+
 ## Формат CSV
 
 Основний формат вхідного CSV-файлу:
