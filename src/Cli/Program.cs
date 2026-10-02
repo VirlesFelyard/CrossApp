@@ -2,6 +2,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Core;
+using Core.Domain;
 using Core.Dto;
 using Core.Import;
 
@@ -42,7 +43,8 @@ else if (args.Contains("--mixed"))
 
     if (!File.Exists(path))
     {
-        Console.WriteLine($"Помилка: файл не знайдено: {Path.GetFullPath(path)}");
+        Console.WriteLine(
+            $"Помилка: файл не знайдено: {Path.GetFullPath(path)}");
 
         return;
     }
@@ -60,7 +62,7 @@ else if (args.Contains("--mixed"))
             case BookDto book:
                 Console.WriteLine(
                     $"Book   | {book.Id} | {book.Isbn} | " +
-                    $"{book.Title} | {book.Year}");
+                    $"{book.Title} | {book.Year} | {book.Author}");
                 break;
 
             case ReaderDto reader:
@@ -70,6 +72,10 @@ else if (args.Contains("--mixed"))
                 break;
         }
     }
+}
+else if (args.Contains("--domain"))
+{
+    RunDomainDemo();
 }
 else
 {
@@ -93,74 +99,148 @@ else
         "(видання, примірники, читачі)");
 
     Console.WriteLine();
+}
 
-    string path = args
-        .FirstOrDefault(arg => !arg.StartsWith("--"))
-        ?? Path.Combine("data", "sample.csv");
+static void RunDomainDemo()
+{
+    Console.WriteLine("Успішні операції");
 
-    Console.WriteLine($"Файл імпорту: {path}");
+    BookCopy copy = BookCopy.Create(
+        "C-001",
+        "978-617-000-001");
+
+    Console.WriteLine($"Створено: {copy}");
+
+    copy.Issue();
+
+    Console.WriteLine($"Після Issue(): {copy}");
+
+    Loan loan = Loan.Open(
+        "L-001",
+        "C-001",
+        "R-001",
+        new DateTime(2026, 10, 1));
+
+    Console.WriteLine($"Створено: {loan}");
+
+    loan.Close(
+        new DateTime(2026, 10, 10));
+
+    Console.WriteLine($"Після Close(): {loan}");
+
+    copy.Return();
+
+    Console.WriteLine($"Після Return(): {copy}");
+
     Console.WriteLine();
+    Console.WriteLine("Порушення інваріантів");
 
-    if (!File.Exists(path))
-    {
-        Console.WriteLine(
-            $"Помилка: файл не знайдено: {Path.GetFullPath(path)}");
+    TryDo(
+        "Порожній ID",
+        () => BookCopy.Create(
+            "",
+            "978-617-000-002"));
 
-        return;
-    }
+    TryDo(
+        "Порожній ISBN",
+        () => BookCopy.Create(
+            "C-002",
+            " "));
 
-    var result = Path.GetExtension(path).ToLowerInvariant() switch
-    {
-        ".csv" => BookCsvImporter.Load(path),
+    BookCopy issuedCopy = BookCopy.Create(
+        "C-003",
+        "978-617-000-003");
 
-        ".json" => BookJsonImporter.Load(path),
+    issuedCopy.Issue();
 
-        _ => new ImportResult<BookDto>(
-            [],
-            [
-                $"Непідтримуване розширення файлу: " +
-                $"{Path.GetExtension(path)}"
-            ],
-            0,
-            0,
-            0)
-    };
+    TryDo(
+        "Повторна видача примірника",
+        () => issuedCopy.Issue());
+
+    TryDo(
+        "Повернення невиданого примірника",
+        () => copy.Return());
+
+    TryDo(
+        "Порожній ReaderId",
+        () => Loan.Open(
+            "L-002",
+            "C-003",
+            "",
+            new DateTime(2026, 10, 1)));
+
+    Loan invalidDateLoan = Loan.Open(
+        "L-003",
+        "C-003",
+        "R-003",
+        new DateTime(2026, 10, 10));
+
+    TryDo(
+        "Дата повернення раніше дати видачі",
+        () => invalidDateLoan.Close(
+            new DateTime(2026, 10, 1)));
+
+    TryDo(
+        "Повторне закриття видачі",
+        () => loan.Close(
+            new DateTime(2026, 10, 15)));
+
+    Console.WriteLine();
+    Console.WriteLine("DTO mapping");
+
+    BookCopyDto copyDto = issuedCopy.ToDto();
 
     Console.WriteLine(
-        $"Завантажено записів: {result.Items.Count}");
+        $"BookCopyDto: {copyDto.Id} | " +
+        $"{copyDto.Isbn} | " +
+        $"Виданий: {copyDto.IsIssued}");
 
-    Console.WriteLine(result.Statistics);
-    Console.WriteLine();
+    BookCopy restoredCopy =
+        BookCopy.FromDto(copyDto);
 
-    if (result.Items.Count > 0)
+    Console.WriteLine(
+        $"BookCopy після FromDto(): {restoredCopy}");
+
+    LoanDto loanDto = loan.ToDto();
+
+    Console.WriteLine(
+        $"LoanDto: {loanDto.Id} | " +
+        $"{loanDto.CopyId} | " +
+        $"{loanDto.ReaderId} | " +
+        $"{loanDto.IssuedOn:d} | " +
+        $"{loanDto.ReturnedOn:d}");
+
+    Loan restoredLoan =
+        Loan.FromDto(loanDto);
+
+    Console.WriteLine(
+        $"Loan після FromDto(): {restoredLoan}");
+}
+
+static void TryDo(
+    string title,
+    Action action)
+{
+    try
     {
-        Console.WriteLine("Перші записи:");
+        action();
 
-        foreach (BookDto book in result.Items.Take(5))
-        {
-            Console.WriteLine(
-                $"{book.Id} | " +
-                $"{book.Isbn} | " +
-                $"{book.Title} | " +
-                $"{book.Year} | " +
-                $"Автор: {book.Author ?? "невідомий"}");
-        }
-    }
-
-    if (result.Errors.Count > 0)
-    {
-        Console.WriteLine();
         Console.WriteLine(
-            $"Помилки ({result.Errors.Count}):");
-
-        foreach (string error in result.Errors)
-        {
-            Console.WriteLine($"- {error}");
-        }
+            $"{title}: ВИНЯТОК НЕ ВИНИК — інваріант не спрацював!");
     }
-    else
+    catch (ArgumentOutOfRangeException ex)
     {
-        Console.WriteLine();
-        Console.WriteLine("Помилок не знайдено.");
+        Console.WriteLine(
+            $"{title}: {ex.GetType().Name} — {ex.Message}");
+    }
+    catch (ArgumentException ex)
+    {
+        Console.WriteLine(
+            $"{title}: {ex.GetType().Name} — {ex.Message}");
+    }
+    catch (InvalidOperationException ex)
+    {
+        Console.WriteLine(
+            $"{title}: {ex.GetType().Name} — {ex.Message}");
     }
 }
