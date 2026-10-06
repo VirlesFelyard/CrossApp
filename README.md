@@ -1,4 +1,4 @@
-﻿# CrossApp
+# CrossApp
 
 Наскрізний проєкт з крос-платформного програмування.
 
@@ -21,31 +21,27 @@ CrossApp/
     │   ├── Core.csproj
     │   ├── EnvironmentInfo.cs
     │   ├── Domain/
+    │   │   ├── Book.cs
     │   │   ├── BookCopy.cs
-    │   │   └── Loan.cs
+    │   │   ├── Loan.cs
+    │   │   ├── LibraryService.cs
+    │   │   ├── Order.cs
+    │   │   └── OrderStatus.cs
     │   ├── Dto/
     │   │   ├── BookDto.cs
     │   │   ├── BookCopyDto.cs
     │   │   ├── LoanDto.cs
+    │   │   ├── ReaderDto.cs
     │   │   └── ImportResult.cs
     │   └── Import/
-    │       └── BookCsvImporter.cs
+    │       ├── BookCsvImporter.cs
+    │       ├── BookJsonImporter.cs
+    │       ├── MixedCsvImporter.cs
+    │       └── DomainImporter.cs
     └── Cli/
         ├── Cli.csproj
         └── Program.cs
 ```
-
-## Інваріанти предметної області
-
-- `BookCopy` має непорожні `Id` та `Isbn`.
-- `BookCopy` не можна повторно видати, якщо він уже виданий.
-- `BookCopy` не можна повернути, якщо він не виданий.
-- `Loan` має непорожні `Id`, `CopyId` та `ReaderId`.
-- Дата повернення не може бути раніше дати видачі.
-- Завершену видачу не можна закрити повторно.
-- Порушення параметрів викликає `ArgumentException` або `ArgumentOutOfRangeException`.
-- Порушення стану об'єкта викликає `InvalidOperationException`.
-
 ## Формат CSV
 
 Основний формат вхідного CSV-файлу:

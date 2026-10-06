@@ -77,6 +77,18 @@ else if (args.Contains("--domain"))
 {
     RunDomainDemo();
 }
+else if (args.Contains("--domain1"))
+{
+    RunImportToDomainDemo();
+}
+else if (args.Contains("--domain2"))
+{
+    RunCrossEntityInvariantDemo();
+}
+else if (args.Contains("--domain3"))
+{
+    RunOrderStatusDemo();
+}
 else
 {
     Console.WriteLine(
@@ -215,6 +227,146 @@ static void RunDomainDemo()
 
     Console.WriteLine(
         $"Loan після FromDto(): {restoredLoan}");
+}
+
+static void RunImportToDomainDemo()
+{
+    Console.WriteLine(
+        "Додаткове завдання 1");
+
+    Console.WriteLine(
+        "ImportResult<BookDto> -> ImportResult<Book>");
+
+    Console.WriteLine();
+
+    var source = new ImportResult<BookDto>(
+        [
+            new BookDto(
+                "B-001",
+                "978-617-001",
+                "Кобзар",
+                1840,
+                "Тарас Шевченко"),
+
+            new BookDto(
+                "B-002",
+                "",
+                "Захар Беркут",
+                1883,
+                "Іван Франко"),
+
+            new BookDto(
+                "B-003",
+                "978-617-003",
+                "Тигролови",
+                999,
+                "Іван Багряний")
+        ],
+        [],
+        3,
+        3,
+        0);
+
+    ImportResult<Book> result = DomainImporter.ToDomain(source);
+
+    Console.WriteLine($"Усього: {result.Total}");
+
+    Console.WriteLine($"Прийнято: {result.Accepted}");
+
+    Console.WriteLine($"Пропущено: {result.Skipped}");
+
+    Console.WriteLine();
+
+    Console.WriteLine("Створені доменні сутності:");
+
+    foreach (Book book in result.Items)
+    {
+        Console.WriteLine($"  {book}");
+    }
+
+    Console.WriteLine();
+
+    Console.WriteLine("Помилки:");
+
+    if (result.Errors.Count == 0)
+    {
+        Console.WriteLine("  Помилок немає.");
+    }
+    else
+    {
+        foreach (string error in result.Errors)
+        {
+            Console.WriteLine($"  ! {error}");
+        }
+    }
+}
+
+static void RunCrossEntityInvariantDemo()
+{
+    Console.WriteLine("Додаткове завдання 2");
+    Console.WriteLine("Перевірка максимальної кількості відкритих видач");
+    Console.WriteLine();
+
+    var service = new LibraryService();
+    var loans = new List<Loan>();
+
+    for (int i = 1; i <= 5; i++)
+    {
+        BookCopy copy = BookCopy.Create(
+            $"C-{i:000}",
+            $"978-617-000-{i:000}");
+
+        loans.Add(service.IssueBook(
+            copy,
+            $"L-{i:000}",
+            "R-001",
+            new DateTime(2026, 10, i),
+            loans));
+    }
+
+    Console.WriteLine($"Відкритих видач: {loans.Count}");
+
+    BookCopy sixthCopy = BookCopy.Create(
+        "C-006",
+        "978-617-000-006");
+
+    TryDo(
+        "Шоста видача для того самого читача",
+        () => service.IssueBook(
+            sixthCopy,
+            "L-006",
+            "R-001",
+            new DateTime(2026, 10, 6),
+            loans));
+}
+
+static void RunOrderStatusDemo()
+{
+    Console.WriteLine("Додаткове завдання 3");
+    Console.WriteLine("Перевірка переходів стану Order");
+    Console.WriteLine();
+
+    Order order = Order.Create("O-001");
+
+    Console.WriteLine($"Створено: {order}");
+
+    order.ChangeStatus(OrderStatus.Confirmed);
+
+    Console.WriteLine($"Після Confirmed: {order}");
+
+    TryDo(
+        "Перехід Confirmed -> Cancelled",
+        () => order.ChangeStatus(OrderStatus.Cancelled));
+
+    Order cancelledOrder = Order.Create("O-002");
+
+    cancelledOrder.ChangeStatus(OrderStatus.Cancelled);
+
+    Console.WriteLine($"Створено: {cancelledOrder}");
+
+    TryDo(
+        "Перехід Cancelled -> Confirmed",
+        () => cancelledOrder.ChangeStatus(OrderStatus.Confirmed));
 }
 
 static void TryDo(
