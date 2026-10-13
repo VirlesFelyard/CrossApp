@@ -14,6 +14,13 @@
 - `LibraryService`: один читач може мати не більше 5 одночасно відкритих видач.
 - `Order`: замовлення починається у стані `Draft`; дозволені переходи `Draft → Confirmed` або `Draft → Cancelled`; після цього змінювати стан не можна.
 
+
+## Сховище
+
+- Інтерфейс: `IBookStore`
+- Реалізації: `InMemoryBookStore`, `FileBookStore`
+- Сервіс: `LendingService`
+
 ## Структура solution
 
 ```
@@ -23,11 +30,16 @@ CrossApp/
 ├── README.md
 ├── .gitignore
 ├── data/
-│   └── sample.csv
+│   ├── sample.csv
+│   ├── mixed.csv
+│   └── sample.json
 └── src/
     ├── Core/
     │   ├── Core.csproj
     │   ├── EnvironmentInfo.cs
+    │   ├── SampleData.cs
+    │   ├── Abstractions/
+    │   │   └── IBookStore.cs
     │   ├── Domain/
     │   │   ├── Book.cs
     │   │   ├── BookCopy.cs
@@ -40,16 +52,23 @@ CrossApp/
     │   │   ├── BookCopyDto.cs
     │   │   ├── LoanDto.cs
     │   │   ├── ReaderDto.cs
-    │   │   └── ImportResult.cs
-    │   └── Import/
-    │       ├── BookCsvImporter.cs
-    │       ├── BookJsonImporter.cs
-    │       ├── MixedCsvImporter.cs
-    │       └── DomainImporter.cs
+    │   │   ├── ImportResult.cs
+    │   │   └── LibraryItemDto.cs
+    │   ├── Import/
+    │   │   ├── BookCsvImporter.cs
+    │   │   ├── BookJsonImporter.cs
+    │   │   ├── MixedCsvImporter.cs
+    │   │   └── DomainImporter.cs
+    │   ├── Services/
+    │   │   └── LendingService.cs
+    │   └── Storage/
+    │       ├── InMemoryBookStore.cs
+    │       └── FileBookStore.cs
     └── Cli/
         ├── Cli.csproj
         └── Program.cs
 ```
+
 ## Формат CSV
 
 Основний формат вхідного CSV-файлу:

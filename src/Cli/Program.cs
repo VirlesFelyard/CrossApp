@@ -1,10 +1,13 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Core;
+using Core.Abstractions;
 using Core.Domain;
 using Core.Dto;
 using Core.Import;
+using Core.Services;
+using Core.Storage;
 
 Console.OutputEncoding = Encoding.UTF8;
 
@@ -89,6 +92,10 @@ else if (args.Contains("--domain3"))
 {
     RunOrderStatusDemo();
 }
+else if (args.Contains("--file") || args.Length == 0)
+{
+    RunStorageDemo(args.Contains("--file"));
+}
 else
 {
     Console.WriteLine(
@@ -111,6 +118,68 @@ else
         "(видання, примірники, читачі)");
 
     Console.WriteLine();
+}
+
+
+static void RunStorageDemo(bool useFile)
+{
+    string path = Path.Combine(AppContext.BaseDirectory, "data", "catalog.json");
+    IBookStore store = useFile
+        ? new FileBookStore(path)
+        : new InMemoryBookStore(SampleData.Books(), SampleData.Copies());
+    var service = new LendingService(store);
+
+    Console.WriteLine($"Сховище: {store.GetType().Name}");
+    Console.WriteLine();
+
+    Book book;
+    if (service.AllBooks().Count == 0)
+    {
+        book = service.AddBook("978-617-000-100", "Нова книга", 2020, "Демо автор");
+        Console.WriteLine($"Додано книгу: {book}");
+    }
+    else
+    {
+        book = service.AllBooks()[0];
+        Console.WriteLine($"Знайдено наявну книгу: {book}");
+    }
+
+    Book updated = service.UpdateBook(book.Id, book.Isbn, book.Title + " (оновлено)", book.Year, book.Author);
+    Console.WriteLine($"Оновлено книгу: {updated}");
+
+    BookCopy copy;
+    if (service.AllCopies().Count == 0)
+    {
+        copy = service.AddCopy(updated.Id);
+        Console.WriteLine($"Додано примірник: {copy}");
+    }
+    else
+    {
+        copy = service.AllCopies()[0];
+    }
+
+    service.IssueCopy(copy.Id);
+    Console.WriteLine($"Після видачі: {service.AllCopies().First(item => item.Id == copy.Id)}");
+    service.ReturnCopy(copy.Id);
+    Console.WriteLine($"Після повернення: {service.AllCopies().First(item => item.Id == copy.Id)}");
+
+    Console.WriteLine();
+    Console.WriteLine("Пошук книги за id:");
+    Book? found = service.FindBook(book.Id);
+    Console.WriteLine(found is null
+        ? $"  Книгу з id={book.Id} не знайдено."
+        : $"  Знайдено: {found}");
+
+    Console.WriteLine();
+    Console.WriteLine("Список книг:");
+    foreach (Book item in service.AllBooks())
+        Console.WriteLine($"  {item}");
+
+    Console.WriteLine();
+    TryDo("Пошук неіснуючого примірника", () => service.IssueCopy("COPY-MISSING"));
+
+    if (useFile)
+        Console.WriteLine($"\nФайл даних: {path}");
 }
 
 static void RunDomainDemo()
