@@ -59,5 +59,11 @@ public sealed class LendingService
 
     public Book? FindBook(string id) => _store.GetBookById(id);
 
+    public IReadOnlyList<Book> SearchBooks(Func<Book, bool> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+        return _store.ListBooks().Where(predicate).ToList();
+    }
+
     public IReadOnlyList<BookCopy> AllCopies() => _store.ListCopies();
 }

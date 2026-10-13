@@ -32,8 +32,6 @@ public sealed class InMemoryBookStore : IBookStore
         _books[book.Id] = book;
     }
 
-    public bool RemoveBook(string id) => _books.Remove(id);
-
     public IReadOnlyList<BookCopy> ListCopies() => _copies.Values.ToList();
 
     public BookCopy? GetCopyById(string id) => _copies.GetValueOrDefault(id);

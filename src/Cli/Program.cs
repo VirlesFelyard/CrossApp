@@ -92,9 +92,9 @@ else if (args.Contains("--domain3"))
 {
     RunOrderStatusDemo();
 }
-else if (args.Contains("--file") || args.Length == 0)
+else if (args.Contains("--file") || args.Contains("--cache") || args.Contains("--search") || args.Length == 0)
 {
-    RunStorageDemo(args.Contains("--file"));
+    RunStorageDemo(args);
 }
 else
 {
@@ -121,12 +121,9 @@ else
 }
 
 
-static void RunStorageDemo(bool useFile)
+static void RunStorageDemo(string[] args)
 {
-    string path = Path.Combine(AppContext.BaseDirectory, "data", "catalog.json");
-    IBookStore store = useFile
-        ? new FileBookStore(path)
-        : new InMemoryBookStore(SampleData.Books(), SampleData.Copies());
+    IBookStore store = StoreFactory.Create(args);
     var service = new LendingService(store);
 
     Console.WriteLine($"Сховище: {store.GetType().Name}");
@@ -165,21 +162,44 @@ static void RunStorageDemo(bool useFile)
 
     Console.WriteLine();
     Console.WriteLine("Пошук книги за id:");
-    Book? found = service.FindBook(book.Id);
-    Console.WriteLine(found is null
+    Book? tryFound = service.FindBook(book.Id);
+    Console.WriteLine(tryFound is null
         ? $"  Книгу з id={book.Id} не знайдено."
-        : $"  Знайдено: {found}");
+        : $"  Знайдено: {tryFound}");
 
     Console.WriteLine();
     Console.WriteLine("Список книг:");
     foreach (Book item in service.AllBooks())
         Console.WriteLine($"  {item}");
 
+
+    if (args.Contains("--search"))
+    {
+        Console.WriteLine();
+        Console.WriteLine("Пошук книг за предикатом: рік видання < 1900");
+        IReadOnlyList<Book> found = service.SearchBooks(book => book.Year < 1900);
+        foreach (Book item in found)
+            Console.WriteLine($"  {item.Title} ({item.Year})");
+        Console.WriteLine($"Знайдено: {found.Count}");
+    }
+
+    if (store is CachingBookStore cachingStore)
+    {
+        service.AllBooks();
+        service.AllBooks();
+        service.FindBook(book.Id);
+        service.FindBook(book.Id);
+        Console.WriteLine();
+        Console.WriteLine("Статистика кешування:");
+        Console.WriteLine($"Cache hits: {cachingStore.CacheHits}");
+        Console.WriteLine($"Cache misses: {cachingStore.CacheMisses}");
+    }
+
     Console.WriteLine();
     TryDo("Пошук неіснуючого примірника", () => service.IssueCopy("COPY-MISSING"));
 
-    if (useFile)
-        Console.WriteLine($"\nФайл даних: {path}");
+    if (args.Contains("--file"))
+        Console.WriteLine($"\nФайл даних: {Path.Combine(AppContext.BaseDirectory, "data", "catalog.json")}");
 }
 
 static void RunDomainDemo()

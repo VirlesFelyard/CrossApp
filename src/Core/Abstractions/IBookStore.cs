@@ -8,7 +8,6 @@ public interface IBookStore
     Book? GetBookById(string id);
     void AddBook(Book book);
     void UpdateBook(Book book);
-    bool RemoveBook(string id);
     IReadOnlyList<BookCopy> ListCopies();
     BookCopy? GetCopyById(string id);
     void AddCopy(BookCopy copy);

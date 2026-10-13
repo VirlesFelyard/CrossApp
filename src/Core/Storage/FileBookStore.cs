@@ -90,15 +90,6 @@ public sealed class FileBookStore : IBookStore
         Flush();
     }
 
-    public bool RemoveBook(string id)
-    {
-        EnsureLoaded();
-        if (!_books.Remove(id))
-            return false;
-        Flush();
-        return true;
-    }
-
     public IReadOnlyList<BookCopy> ListCopies()
     {
         EnsureLoaded();
