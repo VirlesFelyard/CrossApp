@@ -8,6 +8,7 @@ using Core.Dto;
 using Core.Import;
 using Core.Services;
 using Core.Storage;
+using Core.Events;
 
 Console.OutputEncoding = Encoding.UTF8;
 
@@ -96,6 +97,10 @@ else if (args.Contains("--file") || args.Contains("--cache") || args.Contains("-
 {
     RunStorageDemo(args);
 }
+else if (args.Contains("--events"))
+{
+    RunEventsDemo();
+}
 else
 {
     Console.WriteLine(
@@ -155,7 +160,7 @@ static void RunStorageDemo(string[] args)
         copy = service.AllCopies()[0];
     }
 
-    service.IssueCopy(copy.Id);
+    service.IssueCopy(copy.Id,"R-001",DateTime.Today.AddDays(14));
     Console.WriteLine($"Після видачі: {service.AllCopies().First(item => item.Id == copy.Id)}");
     service.ReturnCopy(copy.Id);
     Console.WriteLine($"Після повернення: {service.AllCopies().First(item => item.Id == copy.Id)}");
@@ -196,7 +201,7 @@ static void RunStorageDemo(string[] args)
     }
 
     Console.WriteLine();
-    TryDo("Пошук неіснуючого примірника", () => service.IssueCopy("COPY-MISSING"));
+    TryDo("Пошук неіснуючого примірника", () => service.IssueCopy(copy.Id, "R-002", DateTime.Today.AddDays(14)));
 
     if (args.Contains("--file"))
         Console.WriteLine($"\nФайл даних: {Path.Combine(AppContext.BaseDirectory, "data", "catalog.json")}");
@@ -456,6 +461,180 @@ static void RunOrderStatusDemo()
     TryDo(
         "Перехід Cancelled -> Confirmed",
         () => cancelledOrder.ChangeStatus(OrderStatus.Confirmed));
+}
+
+static void RunEventsDemo()
+{
+    var store = new InMemoryBookStore();
+    var service = new LendingService(store);
+
+    string logPath = Path.Combine(
+        AppContext.BaseDirectory,
+        "logs",
+        "app.log");
+
+    Directory.CreateDirectory(
+        Path.GetDirectoryName(logPath)!);
+
+    File.WriteAllText(logPath, string.Empty);
+
+    Console.WriteLine();
+
+    void OnLibraryChanged(
+        object? sender,
+        LibraryChangedEventArgs e)
+    {
+        string line = e.Kind switch
+        {
+            LibraryChangeKind.BookAdded =>
+                $"{e.At:HH:mm:ss} BookAdded | " +
+                $"Додано книгу {e.BookId}",
+
+            LibraryChangeKind.CopyIssued =>
+                $"{e.At:HH:mm:ss} CopyIssued | " +
+                $"Примірник {e.CopyId} видано читачу " +
+                $"{e.ReaderId} до {e.DueDate:yyyy-MM-dd}",
+
+            LibraryChangeKind.CopyReturned =>
+                $"{e.At:HH:mm:ss} CopyReturned | " +
+                $"Примірник {e.CopyId} повернуто. " +
+                $"Читач: {e.ReaderId ?? "невідомий"}, " +
+                $"строк повернення: " +
+                $"{e.DueDate?.ToString("yyyy-MM-dd") ?? "невідомий"}",
+
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(e.Kind))
+        };
+
+        Console.WriteLine(line);
+
+        try
+        {
+            File.AppendAllText(
+                logPath,
+                line + Environment.NewLine);
+        }
+        catch (IOException ex)
+        {
+            Console.Error.WriteLine(
+                $"Помилка запису журналу: {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Console.Error.WriteLine(
+                $"Немає доступу до журналу: {ex.Message}");
+        }
+    }
+
+    service.Changed += OnLibraryChanged;
+
+    int changes = 0;
+
+    EventHandler<LibraryChangedEventArgs> counterHandler =
+        (_, _) => changes++;
+
+    service.Changed += counterHandler;
+
+    DateTime dueDate = DateTime.Today.AddDays(14);
+
+    Console.WriteLine("1. Успішні операції");
+
+    Book book = service.AddBook(
+        "978-617-000-101",
+        "Основи програмування",
+        2022,
+        "Демо автор");
+
+    BookCopy copy = service.AddCopy(book.Id);
+
+    service.IssueCopy(
+        copy.Id,
+        "R-001",
+        dueDate);
+
+    service.ReturnCopy(copy.Id);
+
+    Console.WriteLine();
+    Console.WriteLine($"Подій отримано: {changes}");
+
+    Console.WriteLine();
+    Console.WriteLine("2. Перевірка відписки");
+
+    int changesBeforeUnsubscribe = changes;
+
+    service.Changed -= OnLibraryChanged;
+
+    Console.WriteLine(
+        $"Подій до відписки: {changesBeforeUnsubscribe}");
+
+    BookCopy secondCopy = service.AddCopy(book.Id);
+
+    service.IssueCopy(
+        secondCopy.Id,
+        "R-002",
+        DateTime.Today.AddDays(21));
+
+    service.ReturnCopy(secondCopy.Id);
+
+    service.IssueCopy(
+        secondCopy.Id,
+        "R-003",
+        DateTime.Today.AddDays(28));
+
+    Console.WriteLine(
+        "Консольний обробник відписаний.");
+
+    Console.WriteLine(
+        $"Подій отримано лічильником: {changes}");
+
+    Console.WriteLine(
+        $"Приріст після відписки: {changes - changesBeforeUnsubscribe}");
+
+
+    Console.WriteLine();
+    Console.WriteLine("3. Перевірка помилкової операції");
+
+    int changesBeforeError = changes;
+
+    try
+    {
+        service.IssueCopy(
+            "COPY-MISSING",
+            "R-999",
+            dueDate);
+
+        Console.WriteLine(
+            "Помилка: очікуваний виняток не виник.");
+    }
+    catch (InvalidOperationException ex)
+    {
+        Console.WriteLine(
+            $"Очікувана помилка: {ex.Message}");
+    }
+
+    Console.WriteLine(
+        $"Подій до помилки: {changesBeforeError}");
+
+    Console.WriteLine(
+        $"Подій після помилки: {changes}");
+
+    Console.WriteLine();
+    Console.WriteLine("4. Пошук через Func");
+
+    IReadOnlyList<BookCopy> availableCopies =
+        service.FindAll(copy => !copy.IsIssued);
+
+    foreach (BookCopy availableCopy in availableCopies)
+    {
+        Console.WriteLine(
+            $"Доступний примірник: {availableCopy.Id}");
+    }
+
+    Console.WriteLine(
+        $"Знайдено доступних примірників: " + $"{availableCopies.Count}");
+
+    Console.WriteLine();
+    Console.WriteLine($"Файл журналу: {logPath}");
 }
 
 static void TryDo(

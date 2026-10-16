@@ -14,6 +14,11 @@
 - `LibraryService`: один читач може мати не більше 5 одночасно відкритих видач.
 - `Order`: замовлення починається у стані `Draft`; дозволені переходи `Draft → Confirmed` або `Draft → Cancelled`; після цього змінювати стан не можна.
 
+## Доменні події
+
+`LendingService` оголошує `event EventHandler<LibraryChangedEventArgs>? Changed`
+і піднімає його лише після успішної зміни стану. Події: `BookAdded`,
+`CopyIssued`, `CopyReturned`; дані: `CopyId`, `ReaderId`, `DueDate`.
 
 ## Сховище
 
@@ -26,7 +31,6 @@
 ```
 CrossApp/
 ├── CrossApp.sln
-├── global.json
 ├── README.md
 ├── .gitignore
 ├── data/
@@ -54,6 +58,9 @@ CrossApp/
     │   │   ├── ReaderDto.cs
     │   │   ├── ImportResult.cs
     │   │   └── LibraryItemDto.cs
+    │   ├── Events/
+    │   │   ├── LibraryChangeKind.cs
+    │   │   └── LibraryChangedEventArgs.cs
     │   ├── Import/
     │   │   ├── BookCsvImporter.cs
     │   │   ├── BookJsonImporter.cs
@@ -63,7 +70,9 @@ CrossApp/
     │   │   └── LendingService.cs
     │   └── Storage/
     │       ├── InMemoryBookStore.cs
-    │       └── FileBookStore.cs
+    │       ├── FileBookStore.cs
+    │       ├── CachingBookStore.cs
+    │       └── StoreFactory.cs
     └── Cli/
         ├── Cli.csproj
         └── Program.cs
