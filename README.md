@@ -43,7 +43,8 @@ CrossApp/
     │   ├── EnvironmentInfo.cs
     │   ├── SampleData.cs
     │   ├── Abstractions/
-    │   │   └── IBookStore.cs
+    │   │   ├── IBookStore.cs
+    │   │   └── INotificationSink.cs 
     │   ├── Domain/
     │   │   ├── Book.cs
     │   │   ├── BookCopy.cs
@@ -75,7 +76,10 @@ CrossApp/
     │       └── StoreFactory.cs
     └── Cli/
         ├── Cli.csproj
-        └── Program.cs
+        ├── Program.cs
+        └── Notifications/
+            ├── ConsoleSink.cs
+            └── FileSink.cs
 ```
 
 ## Формат CSV

@@ -9,6 +9,7 @@ using Core.Import;
 using Core.Services;
 using Core.Storage;
 using Core.Events;
+using Cli.Notifications;
 
 Console.OutputEncoding = Encoding.UTF8;
 
@@ -100,6 +101,14 @@ else if (args.Contains("--file") || args.Contains("--cache") || args.Contains("-
 else if (args.Contains("--events"))
 {
     RunEventsDemo();
+}
+else if (args.Contains("--events1"))
+{
+    RunSinkDemo();
+}
+else if (args.Contains("--events2"))
+{
+    RunImportReportDemo();
 }
 else
 {
@@ -461,6 +470,55 @@ static void RunOrderStatusDemo()
     TryDo(
         "Перехід Cancelled -> Confirmed",
         () => cancelledOrder.ChangeStatus(OrderStatus.Confirmed));
+}
+
+static void RunSinkDemo()
+{
+    string logPath = Path.Combine(
+        AppContext.BaseDirectory,
+        "logs",
+        "sink.log");
+
+    INotificationSink[] sinks =
+    [
+        new ConsoleSink(),
+        new FileSink(logPath)
+    ];
+
+    IBookStore store = new InMemoryBookStore();
+    var service = new LendingService(store, sinks);
+
+    Book book = service.AddBook(
+        "978-617-000-101",
+        "Основи програмування",
+        2022,
+        "Демо автор");
+
+    BookCopy copy = service.AddCopy(book.Id);
+
+    service.IssueCopy(
+        copy.Id,
+        "R-001",
+        DateTime.Today.AddDays(14));
+
+    service.ReturnCopy(copy.Id);
+
+    Console.WriteLine();
+    Console.WriteLine($"Журнал: {logPath}");
+}
+
+static void RunImportReportDemo()
+{
+    string path = Path.Combine("data", "sample.csv");
+
+    ImportResult<BookDto> result = BookCsvImporter.Load(
+        path,
+        message => Console.WriteLine($"Пропущено (Action): {message}"));
+
+    Console.WriteLine();
+    Console.WriteLine($"Усього рядків: {result.Total}");
+    Console.WriteLine($"Прийнято: {result.Accepted}");
+    Console.WriteLine($"Пропущено: {result.Skipped}");
 }
 
 static void RunEventsDemo()

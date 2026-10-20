@@ -8,15 +8,28 @@ namespace Core.Services;
 public sealed class LendingService
 {
     private readonly IBookStore _store;
+    private readonly IReadOnlyList<INotificationSink> _notificationSinks;
 
     private readonly Dictionary<string, (string ReaderId, DateTime DueDate)>
         _activeLoans = new(StringComparer.OrdinalIgnoreCase);
 
     public event EventHandler<LibraryChangedEventArgs>? Changed;
 
-    public LendingService(IBookStore store)
+    public LendingService(
+        IBookStore store,
+        IEnumerable<INotificationSink>? notificationSinks = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
+        _notificationSinks = (notificationSinks ?? [])
+            .ToList();
+    }
+
+    private void NotifySinks(string message)
+    {
+        foreach (INotificationSink sink in _notificationSinks)
+        {
+            sink.Notify(message);
+        }
     }
 
     private void OnChanged(
@@ -51,9 +64,8 @@ public sealed class LendingService
 
         _store.AddBook(book);
 
-        OnChanged(
-            LibraryChangeKind.BookAdded,
-            bookId: book.Id);
+        NotifySinks($"BookAdded | {book.Id}");
+        OnChanged(LibraryChangeKind.BookAdded, bookId: book.Id);
 
         return book;
     }
@@ -75,6 +87,8 @@ public sealed class LendingService
 
         _store.UpdateBook(book);
 
+        NotifySinks($"BookUpdated | {book.Id}");
+
         return book;
     }
 
@@ -89,6 +103,8 @@ public sealed class LendingService
             book.Isbn);
 
         _store.AddCopy(copy);
+
+        NotifySinks($"CopyAdded | {copy.Id}");
 
         return copy;
     }
@@ -117,14 +133,14 @@ public sealed class LendingService
                 $"Примірник з ID '{copyId}' не знайдено.");
 
         copy.Issue();
-
         _store.UpdateCopy(copy);
 
         string normalizedReaderId = readerId.Trim();
 
-        _activeLoans[copy.Id] = (
-            normalizedReaderId,
-            dueDate);
+        _activeLoans[copy.Id] = (normalizedReaderId, dueDate);
+
+        NotifySinks(
+            $"CopyIssued | {copy.Id} | Reader: {normalizedReaderId} | Due: {dueDate:yyyy-MM-dd}");
 
         OnChanged(
             LibraryChangeKind.CopyIssued,
@@ -140,7 +156,6 @@ public sealed class LendingService
                 $"Примірник з ID '{copyId}' не знайдено.");
 
         copy.Return();
-
         _store.UpdateCopy(copy);
 
         string? readerId = null;
@@ -150,9 +165,10 @@ public sealed class LendingService
         {
             readerId = loan.ReaderId;
             dueDate = loan.DueDate;
-
             _activeLoans.Remove(copy.Id);
         }
+
+        NotifySinks($"CopyReturned | {copy.Id}");
 
         OnChanged(
             LibraryChangeKind.CopyReturned,
@@ -190,4 +206,3 @@ public sealed class LendingService
             .ToList();
     }
 }
-

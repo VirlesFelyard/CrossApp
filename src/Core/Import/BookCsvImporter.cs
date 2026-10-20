@@ -8,7 +8,7 @@ public static class BookCsvImporter
 {
     private const char Separator = ';';
 
-    public static ImportResult<BookDto> Load(string path)
+    public static ImportResult<BookDto> Load(string path, Action<string>? onSkippedRow = null)
     {
         var items = new List<BookDto>();
         var errors = new List<string>();
@@ -42,7 +42,11 @@ public static class BookCsvImporter
 
                 case ParseFailed failed:
                     skipped++;
-                    errors.Add($"рядок {number}: {failed.Reason}");
+
+                    string message = $"рядок {number}: {failed.Reason}";
+
+                    errors.Add(message);
+                    onSkippedRow?.Invoke(message);
                     break;
             }
         }
