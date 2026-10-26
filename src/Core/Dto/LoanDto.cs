@@ -5,4 +5,5 @@ public record LoanDto(
     string CopyId,
     string ReaderId,
     DateTime IssuedOn,
-    DateTime? ReturnedOn);
+    DateTime? ReturnedOn,
+    DateTime? DueDate = null);

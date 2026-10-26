@@ -6,6 +6,10 @@
 
 Призначення: облік примірників книг, читачів, їх видачі та повернення.
 
+## Відкладене виконання
+
+Запит `source.Where(...)` у `ReportService.DeferredExecutionDemo` лише описується в момент оголошення, а фактично виконується під час кожного виклику `Count()` і `ToList()`. Перший `Count()` порахував прострочені видачі до змін джерела, потім до `source` додано ще одну прострочену видачу, тому другий `Count()` повторно пройшов уже змінений список і дав число на одиницю більше. `ToList()` зафіксував результат у `snapshot`, тому після `source.Clear()` у знімку лишилась та сама кількість, що була на момент виклику `ToList()`.
+
 ## Інваріанти доменної моделі
 
 - `Book`: ID, ISBN і назва не можуть бути порожніми; рік видання має бути від 1450 до поточного року.
@@ -44,7 +48,7 @@ CrossApp/
     │   ├── SampleData.cs
     │   ├── Abstractions/
     │   │   ├── IBookStore.cs
-    │   │   └── INotificationSink.cs 
+    │   │   └── INotificationSink.cs
     │   ├── Domain/
     │   │   ├── Book.cs
     │   │   ├── BookCopy.cs
@@ -61,12 +65,17 @@ CrossApp/
     │   │   └── LibraryItemDto.cs
     │   ├── Events/
     │   │   ├── LibraryChangeKind.cs
-    │   │   └── LibraryChangedEventArgs.cs
+    │   │   └── LibraryChangeKindEventArgs.cs
     │   ├── Import/
     │   │   ├── BookCsvImporter.cs
     │   │   ├── BookJsonImporter.cs
     │   │   ├── MixedCsvImporter.cs
     │   │   └── DomainImporter.cs
+    │   ├── Reports/
+    │   │   ├── ReportService.cs
+    │   │   ├── ReaderLoanLine.cs
+    │   │   ├── OverdueLine.cs
+    │   │   └── GroupSummary.cs
     │   ├── Services/
     │   │   └── LendingService.cs
     │   └── Storage/

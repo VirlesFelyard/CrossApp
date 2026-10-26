@@ -9,12 +9,14 @@ public sealed class Loan
     private readonly string _readerId;
     private readonly DateTime _issuedOn;
     private DateTime? _returnedOn;
+    private readonly DateTime? _dueDate;
 
     public string Id => _id;
     public string CopyId => _copyId;
     public string ReaderId => _readerId;
     public DateTime IssuedOn => _issuedOn;
     public DateTime? ReturnedOn => _returnedOn;
+    public DateTime? DueDate => _dueDate;
 
     public bool IsClosed => _returnedOn.HasValue;
 
@@ -22,20 +24,23 @@ public sealed class Loan
         string id,
         string copyId,
         string readerId,
-        DateTime issuedOn)
+        DateTime issuedOn,
+        DateTime? dueDate)
     {
         _id = id;
         _copyId = copyId;
         _readerId = readerId;
         _issuedOn = issuedOn;
         _returnedOn = null;
+        _dueDate = dueDate;
     }
 
     public static Loan Open(
         string id,
         string copyId,
         string readerId,
-        DateTime issuedOn)
+        DateTime issuedOn,
+        DateTime? dueDate = null)
     {
         if (string.IsNullOrWhiteSpace(id))
         {
@@ -70,7 +75,8 @@ public sealed class Loan
             id.Trim(),
             copyId.Trim(),
             readerId.Trim(),
-            issuedOn);
+            issuedOn,
+            dueDate);
     }
 
     public void Close(DateTime returnedOn)
@@ -107,7 +113,8 @@ public sealed class Loan
             CopyId,
             ReaderId,
             IssuedOn,
-            ReturnedOn);
+            ReturnedOn,
+            DueDate);
 
     public static Loan FromDto(LoanDto dto)
     {
@@ -115,7 +122,8 @@ public sealed class Loan
             dto.Id,
             dto.CopyId,
             dto.ReaderId,
-            dto.IssuedOn);
+            dto.IssuedOn,
+            dto.DueDate);
 
         if (dto.ReturnedOn.HasValue)
         {

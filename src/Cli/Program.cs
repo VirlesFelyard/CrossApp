@@ -9,9 +9,18 @@ using Core.Import;
 using Core.Services;
 using Core.Storage;
 using Core.Events;
+using Core.Reports;
 using Cli.Notifications;
 
 Console.OutputEncoding = Encoding.UTF8;
+
+string? reportCommand = args.FirstOrDefault(arg => !arg.StartsWith("--"));
+
+if (reportCommand is not null && reportCommand.StartsWith("report-", StringComparison.Ordinal))
+{
+    RunReport(reportCommand);
+    return;
+}
 
 EnvironmentReport report = EnvironmentInfo.Collect();
 
@@ -134,6 +143,90 @@ else
     Console.WriteLine();
 }
 
+
+static void RunReport(string command)
+{
+    var books = SampleData.Books();
+    var copies = SampleData.Copies();
+    var readers = SampleData.Readers();
+    var loans = SampleData.Loans();
+    DateTime today = DateTime.Today;
+
+    switch (command)
+    {
+        case "report-top":
+            var top = ReportService.TopReaders(readers, loans, 5);
+            Console.WriteLine("Топ-5 читачів за кількістю видач");
+            Console.WriteLine($"Усього читачів: {readers.Count}, усього видач: {loans.Count}");
+            Console.WriteLine();
+            Console.WriteLine($"  {"№",-3} {"ID",-8} {"Ім'я",-20} {"Видач",6}");
+            Console.WriteLine($"  {new string('-', 40)}");
+            int place = 1;
+            foreach (var line in top)
+            {
+                Console.WriteLine($"  {place,-3} {line.ReaderId,-8} {line.Name,-20} {line.Loans,6}");
+                place++;
+            }
+            Console.WriteLine();
+            Console.WriteLine("Порядок: за кількістю видач (спадання), потім за ID читача");
+            break;
+
+        case "report-overdue":
+            var overdue = ReportService.Overdue(loans, today);
+            Console.WriteLine($"Прострочені видачі станом на {today:yyyy-MM-dd}");
+            Console.WriteLine();
+            Console.WriteLine($"  {"Видача",-8} {"Примірник",-10} {"Читач",-8} {"Строк",-12} {"Днів",5}");
+            Console.WriteLine($"  {new string('-', 47)}");
+            foreach (var line in overdue)
+            {
+                Console.WriteLine(
+                    $"  {line.LoanId,-8} {line.CopyId,-10} {line.ReaderId,-8} " +
+                    $"{line.DueDate:yyyy-MM-dd,-12} {(today - line.DueDate).Days,5}");
+            }
+            Console.WriteLine();
+            Console.WriteLine($"Усього прострочених: {overdue.Count} з {loans.Count} видач");
+            break;
+
+        case "report-groups":
+            var groups = ReportService.BooksByPeriod(books, copies);
+            Console.WriteLine("Видання за періодом випуску");
+            Console.WriteLine();
+            Console.WriteLine($"  {"Період",-16} {"Видань",8} {"Примірників",12}");
+            Console.WriteLine($"  {new string('-', 38)}");
+            foreach (var group in groups)
+                Console.WriteLine($"  {group.Key,-16} {group.Count,8} {group.TotalCopies,12}");
+            Console.WriteLine($"  {new string('-', 38)}");
+            Console.WriteLine($"  {"Разом",-16} {groups.Sum(group => group.Count),8} {groups.Sum(group => group.TotalCopies),12}");
+            Console.WriteLine();
+            Console.WriteLine($"Груп (періодів): {groups.Count}");
+            break;
+
+        case "report-sum":
+            var totals = ReportService.Totals(books, copies);
+            Console.WriteLine("Підсумок за примірниками");
+            Console.WriteLine();
+            Console.WriteLine($"  Книг у каталозі          : {totals.Books}");
+            Console.WriteLine($"  Примірників усього       : {totals.Copies}");
+            Console.WriteLine($"  Середньо на книгу        : {totals.Average:F2}");
+            Console.WriteLine($"  Максимум для однієї книги: {totals.Max}");
+            break;
+
+        case "report-deferred":
+            var demo = ReportService.DeferredExecutionDemo(loans, today);
+            Console.WriteLine("Демонстрація відкладеного виконання");
+            Console.WriteLine("Запит: прострочені видачі (не повернуті, строк < сьогодні)");
+            Console.WriteLine();
+            Console.WriteLine($"  1. Прострочених до змін джерела   : {demo.Before}");
+            Console.WriteLine($"  2. Прострочених після змін джерела: {demo.After}");
+            Console.WriteLine($"  3. У знімку після Clear()         : {demo.Snapshot}");
+            Console.WriteLine();
+            break;
+
+        default:
+            Console.WriteLine("report-top | report-overdue | report-groups | report-sum | report-deferred");
+            break;
+    }
+}
 
 static void RunStorageDemo(string[] args)
 {
