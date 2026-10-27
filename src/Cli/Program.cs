@@ -187,8 +187,27 @@ static void RunReport(string command)
             Console.WriteLine($"Усього прострочених: {overdue.Count} з {loans.Count} видач");
             break;
 
+        case "report-books":
+            var topBooks = ReportService.TopBooks(books, copies, loans, 5);
+            Console.WriteLine("Топ-5 видань за кількістю видач");
+            Console.WriteLine();
+            Console.WriteLine($"  {"№",-3} {"ID",-8} {"Назва",-36} {"Видач",6}");
+            Console.WriteLine($"  {new string('-', 56)}");
+            int rank = 1;
+            foreach (var line in topBooks)
+            {
+                Console.WriteLine($"  {rank,-3} {line.BookId,-8} {line.Title,-36} {line.Loans,6}");
+                rank++;
+            }
+            Console.WriteLine();
+            Console.WriteLine("Порядок: за кількістю видач (спадання), потім за ID видання");
+            break;
+
         case "report-groups":
-            var groups = ReportService.BooksByPeriod(books, copies);
+        case "report-groups-query":
+            var groups = command == "report-groups-query"
+                ? ReportService.BooksByPeriodQuery(books, copies)
+                : ReportService.BooksByPeriod(books, copies);
             Console.WriteLine("Видання за періодом випуску");
             Console.WriteLine();
             Console.WriteLine($"  {"Період",-16} {"Видань",8} {"Примірників",12}");
@@ -222,8 +241,17 @@ static void RunReport(string command)
             Console.WriteLine();
             break;
 
+        case "report-benchmark":
+            var bench = ReportBenchmark.Compare(100_000, today);
+            Console.WriteLine("Порівняння ToList у середині ланцюжка (прострочені видачі за читачами)");
+            Console.WriteLine();
+            Console.WriteLine($"  Записів              : {bench.Records}");
+            Console.WriteLine($"  Без ToList у середині: {bench.WithoutToListMs:F2} мс");
+            Console.WriteLine($"  З ToList у середині  : {bench.WithToListMs:F2} мс");
+            break;
+
         default:
-            Console.WriteLine("report-top | report-overdue | report-groups | report-sum | report-deferred");
+            Console.WriteLine("report-top | report-overdue | report-books | report-groups | report-groups-query | report-sum | report-deferred | report-benchmark");
             break;
     }
 }

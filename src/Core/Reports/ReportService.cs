@@ -16,9 +16,31 @@ public static class ReportService
 
         return readers
             .Select(r => new ReaderLoanLine(r.Id, r.Name, counts.GetValueOrDefault(r.Id)))
-            .OrderByDescending(line => line.Loans)
-            .ThenBy(line => line.ReaderId, StringComparer.Ordinal)
-            .Take(n)
+            .TopBy(line => line.Loans, line => line.ReaderId, n)
+            .ToList();
+    }
+
+    public static IReadOnlyList<BookLoanLine> TopBooks(
+        IEnumerable<Book> books,
+        IEnumerable<BookCopy> copies,
+        IEnumerable<Loan> loans,
+        int n)
+    {
+        IEnumerable<string> loanIsbns = loans.Join(
+            copies,
+            loan => loan.CopyId,
+            copy => copy.Id,
+            (loan, copy) => copy.Isbn,
+            StringComparer.OrdinalIgnoreCase);
+
+        return books
+            .GroupJoin(
+                loanIsbns,
+                book => book.Isbn,
+                isbn => isbn,
+                (book, bookLoans) => new BookLoanLine(book.Id, book.Title, bookLoans.Count()),
+                StringComparer.OrdinalIgnoreCase)
+            .TopBy(line => line.Loans, line => line.BookId, n)
             .ToList();
     }
 
@@ -46,6 +68,22 @@ public static class ReportService
                 PeriodNames[g.Key],
                 g.Count(),
                 g.Sum(book => copyCounts.GetValueOrDefault(book.Isbn))))
+            .ToList();
+    }
+
+    public static IReadOnlyList<GroupSummary> BooksByPeriodQuery(
+        IEnumerable<Book> books,
+        IEnumerable<BookCopy> copies)
+    {
+        Dictionary<string, int> copyCounts = CountCopies(copies);
+
+        return (from book in books
+                group book by PeriodIndex(book.Year) into g
+                orderby g.Key
+                select new GroupSummary(
+                    PeriodNames[g.Key],
+                    g.Count(),
+                    g.Sum(b => copyCounts.GetValueOrDefault(b.Isbn))))
             .ToList();
     }
 
