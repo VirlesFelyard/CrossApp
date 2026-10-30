@@ -6,6 +6,22 @@
 
 Призначення: облік примірників книг, читачів, їх видачі та повернення.
 
+## Імпорт каталогу та тестування
+
+Запуск імпорту каталогу з JSON-файлу:
+
+dotnet run --project src/Cli -f net8.0 -- --file data/sample.json
+
+Запуск модульних тестів:
+
+dotnet test CrossApp.sln
+
+Для перевірки скасування потрібно запустити імпорт великого JSON-файлу:
+
+dotnet run --project src/Cli -f net8.0 -- --file data/large.json
+
+Під час виконання натиснути Ctrl+C. Програма повинна вивести: Імпорт скасовано.
+
 ## Порівняння читабельності синтаксису запитів
 
 Звіт BooksByPeriodQuery записано в синтаксисі запитів (from ... group ... into ...). Для групування він читається компактніше, бо ключ групи та агрегати зібрані в одному блоці. Методний синтаксис (GroupBy(...).Select(...)) краще підходить для довгих ланцюжків Where → OrderBy → ThenBy → Take, де порядок операцій читається зліва направо.
@@ -40,63 +56,74 @@
 CrossApp/
 ├── CrossApp.sln
 ├── README.md
-├── .gitignore
 ├── data/
-│   ├── sample.csv
 │   ├── mixed.csv
-│   └── sample.json
+│   ├── sample.csv
+│   ├── sample.json
+│   ├── bad.json
+│   └── large.json
+├── tests/
+│   └── Core.Tests/
+│       ├── Core.Tests.csproj
+│       ├── CatalogServiceTests.cs
+│       ├── ImportTests.cs
+│       ├── ReportServiceTests.cs
+│       └── TestData.cs
 └── src/
-    ├── Core/
-    │   ├── Core.csproj
-    │   ├── EnvironmentInfo.cs
-    │   ├── SampleData.cs
-    │   ├── Abstractions/
-    │   │   ├── IBookStore.cs
-    │   │   └── INotificationSink.cs
-    │   ├── Domain/
-    │   │   ├── Book.cs
-    │   │   ├── BookCopy.cs
-    │   │   ├── Loan.cs
-    │   │   ├── LibraryService.cs
-    │   │   ├── Order.cs
-    │   │   └── OrderStatus.cs
-    │   ├── Dto/
-    │   │   ├── BookDto.cs
-    │   │   ├── BookCopyDto.cs
-    │   │   ├── LoanDto.cs
-    │   │   ├── ReaderDto.cs
-    │   │   ├── ImportResult.cs
-    │   │   └── LibraryItemDto.cs
-    │   ├── Events/
-    │   │   ├── LibraryChangeKind.cs
-    │   │   └── LibraryChangeKindEventArgs.cs
-    │   ├── Import/
-    │   │   ├── BookCsvImporter.cs
-    │   │   ├── BookJsonImporter.cs
-    │   │   ├── MixedCsvImporter.cs
-    │   │   └── DomainImporter.cs
-    │   ├── Reports/
-    │   │   ├── ReportService.cs
-    │   │   ├── ReaderLoanLine.cs
-    │   │   ├── OverdueLine.cs
-    │   │   ├── GroupSummary.cs
-    │   │   ├── BookLoanLine.cs
-    │   │   ├── BenchmarkResult.cs
-    │   │   ├── EnumerableExtensions.cs
-    │   │   └── ReportBenchmark.cs
-    │   ├── Services/
-    │   │   └── LendingService.cs
-    │   └── Storage/
-    │       ├── InMemoryBookStore.cs
-    │       ├── FileBookStore.cs
-    │       ├── CachingBookStore.cs
-    │       └── StoreFactory.cs
-    └── Cli/
-        ├── Cli.csproj
-        ├── Program.cs
-        └── Notifications/
-            ├── ConsoleSink.cs
-            └── FileSink.cs
+    ├── Cli/
+    │   ├── Cli.csproj
+    │   ├── Program.cs
+    │   └── Notifications/
+    │       ├── ConsoleSink.cs
+    │       └── FileSink.cs
+    └── Core/
+        ├── Core.csproj
+        ├── EnvironmentInfo.cs
+        ├── SampleData.cs
+        ├── DomainException.cs
+        ├── Abstractions/
+        │   ├── ICatalogImporter.cs
+        │   ├── IBookStore.cs
+        │   └── INotificationSink.cs
+        ├── Domain/
+        │   ├── Book.cs
+        │   ├── BookCopy.cs
+        │   ├── LibraryService.cs
+        │   ├── Loan.cs
+        │   ├── Order.cs
+        │   └── OrderStatus.cs
+        ├── Dto/
+        │   ├── BookDto.cs
+        │   ├── BookCopyDto.cs
+        │   ├── ImportResult.cs
+        │   ├── LibraryItemDto.cs
+        │   ├── LoanDto.cs
+        │   └── ReaderDto.cs
+        ├── Events/
+        │   ├── LibraryChangeKind.cs
+        │   └── LibraryChangeKindEventArgs.cs
+        ├── Import/
+        │   ├── BookCsvImporter.cs
+        │   ├── BookJsonImporter.cs
+        │   ├── DomainImporter.cs
+        │   └── MixedCsvImporter.cs
+        ├── Reports/
+        │   ├── BenchmarkResult.cs
+        │   ├── BookLoanLine.cs
+        │   ├── EnumerableExtensions.cs
+        │   ├── GroupSummary.cs
+        │   ├── OverdueLine.cs
+        │   ├── ReaderLoanLine.cs
+        │   ├── ReportBenchmark.cs
+        │   └── ReportService.cs
+        ├── Services/
+        │   └── LendingService.cs
+        └── Storage/
+            ├── CachingBookStore.cs
+            ├── FileBookStore.cs
+            ├── InMemoryBookStore.cs
+            ├── JsonCatalogImporter.cs
+            └── StoreFactory.cs
 ```
 
 ## Формат CSV

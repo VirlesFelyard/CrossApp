@@ -1,3 +1,4 @@
+using Core;
 using Core.Dto;
 
 namespace Core.Domain;
@@ -83,7 +84,7 @@ public sealed class Loan
     {
         if (IsClosed)
         {
-            throw new InvalidOperationException(
+            throw new DomainException(
                 $"Видача '{_id}' вже закрита");
         }
 
@@ -140,3 +141,4 @@ public sealed class Loan
             ? ReturnedOn.Value.ToString("d")
             : "ще не повернено");
 }
+

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "BAD-001",
+    "isbn": "978-617-999-001",
+    "title": "",
+    "year": 2020,
+    "author": "Test Author"
+  },
+  {
+    "id": "BAD-002",
+    "isbn": "978-617-999-002",
+    "title": "Valid Book",
+    "year": 2022,
+    "author": "Another Author"
+  }
+]

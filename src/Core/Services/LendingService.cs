@@ -177,6 +177,35 @@ public sealed class LendingService
             dueDate: dueDate);
     }
 
+    public async Task<int> ImportAsync(
+        ICatalogImporter importer,
+        string path,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(importer);
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ct.ThrowIfCancellationRequested();
+
+        IReadOnlyList<Book> items = await importer.LoadAsync(path, ct);
+        int added = 0;
+
+        foreach (Book item in items)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (_store.GetBookById(item.Id) is not null)
+            {
+                continue;
+            }
+
+            _store.AddBook(item);
+            OnChanged(LibraryChangeKind.BookAdded, bookId: item.Id);
+            added++;
+        }
+
+        return added;
+    }
+
     public IReadOnlyList<Book> AllBooks() =>
         _store.ListBooks();
 
@@ -206,3 +235,4 @@ public sealed class LendingService
             .ToList();
     }
 }
+

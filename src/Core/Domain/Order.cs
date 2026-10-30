@@ -1,3 +1,5 @@
+using Core;
+
 namespace Core.Domain;
 
 public sealed class Order
@@ -19,7 +21,7 @@ public sealed class Order
         if (string.IsNullOrWhiteSpace(id))
         {
             throw new ArgumentException(
-                "Ідентифікатор замовлення не може бути порожнім",
+                "Р†РґРµРЅС‚РёС„С–РєР°С‚РѕСЂ Р·Р°РјРѕРІР»РµРЅРЅСЏ РЅРµ РјРѕР¶Рµ Р±СѓС‚Рё РїРѕСЂРѕР¶РЅС–Рј",
                 nameof(id));
         }
 
@@ -37,13 +39,13 @@ public sealed class Order
 
         if (!allowed)
         {
-            throw new InvalidOperationException(
-                $"Перехід зі стану '{_status}' у стан '{newStatus}' заборонений");
+            throw new DomainException(
+                $"РџРµСЂРµС…С–Рґ Р·С– СЃС‚Р°РЅСѓ '{_status}' Сѓ СЃС‚Р°РЅ '{newStatus}' Р·Р°Р±РѕСЂРѕРЅРµРЅРёР№");
         }
 
         _status = newStatus;
     }
 
     public override string ToString() =>
-        $"{Id} | Статус: {Status}";
+        $"{Id} | РЎС‚Р°С‚СѓСЃ: {Status}";
 }

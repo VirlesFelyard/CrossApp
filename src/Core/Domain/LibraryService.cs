@@ -1,3 +1,5 @@
+using Core;
+
 namespace Core.Domain;
 
 public sealed class LibraryService
@@ -10,8 +12,8 @@ public sealed class LibraryService
 
         if (openLoans >= MaxOpenLoans)
         {
-            throw new InvalidOperationException(
-                $"Читач '{readerId}' вже має {MaxOpenLoans} відкритих видач");
+            throw new DomainException(
+                $"Р§РёС‚Р°С‡ '{readerId}' РІР¶Рµ РјР°С” {MaxOpenLoans} РІС–РґРєСЂРёС‚РёС… РІРёРґР°С‡");
         }
 
         copy.Issue();

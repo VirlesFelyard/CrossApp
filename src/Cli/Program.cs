@@ -87,6 +87,10 @@ else if (args.Contains("--mixed"))
         }
     }
 }
+else if (args.Contains("--file"))
+{
+    await RunAsyncImport(args);
+}
 else if (args.Contains("--domain"))
 {
     RunDomainDemo();
@@ -103,7 +107,7 @@ else if (args.Contains("--domain3"))
 {
     RunOrderStatusDemo();
 }
-else if (args.Contains("--file") || args.Contains("--cache") || args.Contains("--search") || args.Length == 0)
+else if (args.Contains("--storage") || args.Contains("--cache") || args.Contains("--search") || args.Length == 0)
 {
     RunStorageDemo(args);
 }
@@ -143,6 +147,50 @@ else
     Console.WriteLine();
 }
 
+
+static async Task RunAsyncImport(string[] args)
+{
+    string dataPath = args
+        .FirstOrDefault(arg => !arg.StartsWith("--"))
+        ?? Path.Combine("data", "sample.json");
+
+    var service = new LendingService(new InMemoryBookStore());
+    using var cts = new CancellationTokenSource();
+
+    ConsoleCancelEventHandler handler = (_, e) =>
+    {
+        e.Cancel = true;
+        cts.Cancel();
+    };
+
+    Console.CancelKeyPress += handler;
+
+    try
+    {
+        int added = await service.ImportAsync(
+            new JsonCatalogImporter(),
+            dataPath,
+            cts.Token);
+
+        Console.WriteLine($"Імпортовано записів: {added}");
+    }
+    catch (OperationCanceledException)
+    {
+        Console.WriteLine("Імпорт скасовано.");
+    }
+    catch (DomainException ex)
+    {
+        Console.WriteLine($"Дані відхилено: {ex.Message}");
+    }
+    catch (FileNotFoundException)
+    {
+        Console.WriteLine($"Файл не знайдено: {dataPath}");
+    }
+    finally
+    {
+        Console.CancelKeyPress -= handler;
+    }
+}
 
 static void RunReport(string command)
 {
@@ -842,4 +890,10 @@ static void TryDo(
         Console.WriteLine(
             $"{title}: {ex.GetType().Name} — {ex.Message}");
     }
+    catch (DomainException ex)
+    {
+        Console.WriteLine(
+            $"{title}: {ex.GetType().Name} — {ex.Message}");
+    }
 }
+

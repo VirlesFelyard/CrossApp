@@ -1,3 +1,4 @@
+using Core;
 using Core.Dto;
 
 namespace Core.Domain;
@@ -51,7 +52,7 @@ public sealed class BookCopy
     {
         if (_isIssued)
         {
-            throw new InvalidOperationException(
+            throw new DomainException(
                 $"Примірник '{_id}' вже виданий");
         }
 
@@ -62,7 +63,7 @@ public sealed class BookCopy
     {
         if (!_isIssued)
         {
-            throw new InvalidOperationException(
+            throw new DomainException(
                 $"Примірник '{_id}' не є виданим");
         }
 
@@ -84,3 +85,4 @@ public sealed class BookCopy
     public override string ToString() =>
         $"{Id} | ISBN: {Isbn} | Виданий: {IsIssued}";
 }
+

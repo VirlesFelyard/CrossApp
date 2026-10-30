@@ -40,21 +40,21 @@ public sealed class Book
         if (string.IsNullOrWhiteSpace(id))
         {
             throw new ArgumentException(
-                "Ідентифікатор книги не може бути порожнім",
+                "Р†РґРµРЅС‚РёС„С–РєР°С‚РѕСЂ РєРЅРёРіРё РЅРµ РјРѕР¶Рµ Р±СѓС‚Рё РїРѕСЂРѕР¶РЅС–Рј",
                 nameof(id));
         }
 
         if (string.IsNullOrWhiteSpace(isbn))
         {
             throw new ArgumentException(
-                "ISBN книги не може бути порожнім",
+                "ISBN РєРЅРёРіРё РЅРµ РјРѕР¶Рµ Р±СѓС‚Рё РїРѕСЂРѕР¶РЅС–Рј",
                 nameof(isbn));
         }
 
         if (string.IsNullOrWhiteSpace(title))
         {
             throw new ArgumentException(
-                "Назва книги не може бути порожньою",
+                "РќР°Р·РІР° РєРЅРёРіРё РЅРµ РјРѕР¶Рµ Р±СѓС‚Рё РїРѕСЂРѕР¶РЅСЊРѕСЋ",
                 nameof(title));
         }
 
@@ -63,7 +63,7 @@ public sealed class Book
             throw new ArgumentOutOfRangeException(
                 nameof(year),
                 year,
-                "Рік книги знаходиться поза допустимими межами");
+                "Р С–Рє РІРёРґР°РЅРЅСЏ РєРЅРёРіРё РїРѕРІРёРЅРµРЅ Р±СѓС‚Рё РІ РґРѕРїСѓСЃС‚РёРјРѕРјСѓ РґС–Р°РїР°Р·РѕРЅС–");
         }
 
         return new Book(
@@ -99,6 +99,6 @@ public sealed class Book
     public override string ToString()
     {
         return $"{Id} | {Isbn} | {Title} | {Year} | " +
-               $"{Author ?? "невідомий автор"}";
+               $"{Author ?? "РђРІС‚РѕСЂ РЅРµ РІРєР°Р·Р°РЅРёР№"}";
     }
 }
