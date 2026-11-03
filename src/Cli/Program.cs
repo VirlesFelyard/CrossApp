@@ -155,35 +155,50 @@ static async Task RunAsyncImport(string[] args)
         ?? Path.Combine("data", "sample.json");
 
     var service = new LendingService(new InMemoryBookStore());
-    using var cts = new CancellationTokenSource();
+    using var userCts = new CancellationTokenSource();
+    using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
     ConsoleCancelEventHandler handler = (_, e) =>
     {
         e.Cancel = true;
-        cts.Cancel();
+        userCts.Cancel();
     };
 
     Console.CancelKeyPress += handler;
+    IProgress<int> progress = new ConsoleImportProgress();
 
     try
     {
         int added = await service.ImportAsync(
             new JsonCatalogImporter(),
             dataPath,
-            cts.Token);
+            userCts.Token,
+            timeoutCts.Token,
+            progress);
 
+        Console.WriteLine();
         Console.WriteLine($"Імпортовано записів: {added}");
     }
     catch (OperationCanceledException)
+        when (timeoutCts.IsCancellationRequested &&
+              !userCts.IsCancellationRequested)
     {
+        Console.WriteLine();
+        Console.WriteLine("Імпорт скасовано через тайм-аут.");
+    }
+    catch (OperationCanceledException)
+    {
+        Console.WriteLine();
         Console.WriteLine("Імпорт скасовано.");
     }
     catch (DomainException ex)
     {
+        Console.WriteLine();
         Console.WriteLine($"Дані відхилено: {ex.Message}");
     }
     catch (FileNotFoundException)
     {
+        Console.WriteLine();
         Console.WriteLine($"Файл не знайдено: {dataPath}");
     }
     finally
@@ -897,3 +912,20 @@ static void TryDo(
     }
 }
 
+sealed class ConsoleImportProgress : IProgress<int>
+{
+    private int _lastPercent = -1;
+
+    public void Report(int value)
+    {
+        int percent = Math.Clamp(value, 0, 100);
+
+        if (percent == _lastPercent)
+        {
+            return;
+        }
+
+        _lastPercent = percent;
+        Console.Write($"\rІмпорт: {percent,3}%");
+    }
+}

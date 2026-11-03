@@ -180,16 +180,25 @@ public sealed class LendingService
     public async Task<int> ImportAsync(
         ICatalogImporter importer,
         string path,
-        CancellationToken ct = default)
+        CancellationToken userToken = default,
+        CancellationToken timeoutToken = default,
+        IProgress<int>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(importer);
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+            userToken,
+            timeoutToken);
+
+        CancellationToken ct = linkedCts.Token;
         ct.ThrowIfCancellationRequested();
 
-        IReadOnlyList<Book> items = await importer.LoadAsync(path, ct);
         int added = 0;
 
-        foreach (Book item in items)
+        await foreach (Book item in importer
+                           .LoadAsync(path, progress: progress)
+                           .WithCancellation(ct))
         {
             ct.ThrowIfCancellationRequested();
 
@@ -235,4 +244,3 @@ public sealed class LendingService
             .ToList();
     }
 }
-

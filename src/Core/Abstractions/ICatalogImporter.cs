@@ -4,7 +4,8 @@ namespace Core.Abstractions;
 
 public interface ICatalogImporter
 {
-    Task<IReadOnlyList<Book>> LoadAsync(
+    IAsyncEnumerable<Book> LoadAsync(
         string path,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        IProgress<int>? progress = null);
 }

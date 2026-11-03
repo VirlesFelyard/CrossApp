@@ -1,4 +1,5 @@
 using Core;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Core.Abstractions;
 using Core.Domain;
@@ -13,12 +14,14 @@ public sealed class JsonCatalogImporter : ICatalogImporter
         PropertyNameCaseInsensitive = true
     };
 
-    public async Task<IReadOnlyList<Book>> LoadAsync(
+    public async IAsyncEnumerable<Book> LoadAsync(
         string path,
-        CancellationToken ct = default)
+        [EnumeratorCancellation] CancellationToken ct = default,
+        IProgress<int>? progress = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         ct.ThrowIfCancellationRequested();
+        progress?.Report(0);
 
         await using var stream = new FileStream(
             path,
@@ -28,31 +31,52 @@ public sealed class JsonCatalogImporter : ICatalogImporter
             4096,
             useAsync: true);
 
-        List<BookDto> dtos = await JsonSerializer.DeserializeAsync<List<BookDto>>(
-            stream,
-            Options,
-            ct)
-            ?? throw new DomainException(
-                $"Файл {Path.GetFileName(path)} не містить списку.");
+        int index = 0;
+        int lastProgress = 0;
 
-        var result = new List<Book>(dtos.Count);
-
-        for (int i = 0; i < dtos.Count; i++)
+        await foreach (BookDto? dto in JsonSerializer.DeserializeAsyncEnumerable<BookDto>(
+                           stream,
+                           Options,
+                           ct))
         {
             ct.ThrowIfCancellationRequested();
+            index++;
+
+            if (dto is null)
+            {
+                throw new DomainException(
+                    $"Запис {index}: порожній запис.");
+            }
+
+            Book book;
 
             try
             {
-                result.Add(Book.FromDto(dtos[i]));
+                book = Book.FromDto(dto);
             }
             catch (ArgumentException ex)
             {
                 throw new DomainException(
-                    $"Запис {i + 1}: {ex.Message}",
+                    $"Запис {index}: {ex.Message}",
                     ex);
             }
+
+            if (stream.Length > 0)
+            {
+                int currentProgress = (int)Math.Min(
+                    99,
+                    stream.Position * 100L / stream.Length);
+
+                if (currentProgress > lastProgress)
+                {
+                    lastProgress = currentProgress;
+                    progress?.Report(currentProgress);
+                }
+            }
+
+            yield return book;
         }
 
-        return result;
+        progress?.Report(100);
     }
 }
