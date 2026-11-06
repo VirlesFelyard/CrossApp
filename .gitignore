@@ -296,7 +296,7 @@ node_modules/
 # Visual Studio 6 build log
 *.plg
 
-# Visual Studio 6 workspace options file
+# Visual Studio 6 workspace options
 *.opt
 
 # Visual Studio 6 auto-generated workspace file (contains which files were open etc.)
@@ -480,3 +480,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+data/
+prod-data/
+secrets.json
