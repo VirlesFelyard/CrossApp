@@ -6,6 +6,52 @@
 
 Призначення: облік примірників книг, читачів, їх видачі та повернення.
 
+## Профілі
+
+| Профіль | Рівень логування | Каталог даних |
+|---|---|---|
+| Development | Debug | `data/` |
+| Production | Warning | `prod-data/` |
+
+Профіль визначається змінною `CROSSAPP_ENVIRONMENT`. За замовчуванням використовується Development.
+
+## Ключі конфігурації
+
+| Ключ | Значення за замовчуванням | Змінна середовища |
+|---|---|---|
+| `EnvironmentName` | Development | `CROSSAPP_EnvironmentName` |
+| `Storage:DataPath` | data | `CROSSAPP_Storage__DataPath` |
+| `Storage:FileName` | library.json | `CROSSAPP_Storage__FileName` |
+| `Logging:MinimumLevel` | Information | `CROSSAPP_Logging__MinimumLevel` |
+| `Library:LoanDays` | 14 | `CROSSAPP_Library__LoanDays` |
+| `Integration:ApiKey` | Не задано | `CROSSAPP_Integration__ApiKey` |
+
+Порядок пріоритету: `appsettings.json` → файл профілю → user-secrets → змінні середовища → аргументи командного рядка. Секретні значення не зберігаються в `appsettings.json`.
+
+## Приклади змінних середовища
+
+**Linux (bash):**
+
+```bash
+export CROSSAPP_ENVIRONMENT=Production
+export CROSSAPP_Storage__DataPath="$HOME/CrossAppData"
+dotnet run --project src/Cli -f net8.0 -- config
+
+export CROSSAPP_DATA_PATH="$HOME/CrossAppData"
+dotnet run --project src/Cli -f net8.0 -- export
+```
+
+**Windows (PowerShell):**
+
+```powershell
+$env:CROSSAPP_ENVIRONMENT = "Production"
+$env:CROSSAPP_Storage__DataPath = "$HOME\CrossAppData"
+dotnet run --project src/Cli -f net8.0 -- config
+
+$env:CROSSAPP_DATA_PATH = "$HOME\CrossAppData"
+dotnet run --project src/Cli -f net8.0 -- export
+```
+
 ## Імпорт каталогу та тестування
 
 Запуск імпорту каталогу з JSON-файлу:

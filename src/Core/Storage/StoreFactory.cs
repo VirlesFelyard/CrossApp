@@ -5,15 +5,16 @@ namespace Core.Storage;
 
 public static class StoreFactory
 {
-    public static IBookStore Create(string[] args)
+    public static IBookStore Create(string[] args, string? configuredFilePath = null)
     {
         ArgumentNullException.ThrowIfNull(args);
 
         IBookStore store;
         if (args.Contains("--file", StringComparer.OrdinalIgnoreCase))
         {
-            string path = Path.Combine(AppContext.BaseDirectory, "data", "catalog.json");
-            store = new FileBookStore(path);
+            if (string.IsNullOrWhiteSpace(configuredFilePath))
+                throw new ArgumentException("Шлях до файлового сховища має надходити з конфігурації.", nameof(configuredFilePath));
+            store = new FileBookStore(configuredFilePath);
         }
         else
         {

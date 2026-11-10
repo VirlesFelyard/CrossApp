@@ -11,8 +11,13 @@ using Core.Storage;
 using Core.Events;
 using Core.Reports;
 using Cli.Notifications;
+using Cli.Commands;
+using Cli.Configuration;
 
 Console.OutputEncoding = Encoding.UTF8;
+
+if (ApplicationCommands.TryRun(args))
+    return;
 
 string? reportCommand = args.FirstOrDefault(arg => !arg.StartsWith("--"));
 
@@ -51,9 +56,9 @@ if (args.Contains("--json"))
 }
 else if (args.Contains("--mixed"))
 {
-    string path = args
-        .FirstOrDefault(arg => !arg.StartsWith("--"))
-        ?? Path.Combine("data", "mixed.csv");
+    string path = ResolveDemoDataPath(
+        args.FirstOrDefault(arg => !arg.StartsWith("--")),
+        "mixed.csv");
 
     if (!File.Exists(path))
     {
@@ -87,6 +92,11 @@ else if (args.Contains("--mixed"))
         }
     }
 }
+else if (args.Contains("--storage") || args.Contains("--cache") ||
+         args.Contains("--search") || args.Length == 0)
+{
+    RunStorageDemo(args);
+}
 else if (args.Contains("--file"))
 {
     await RunAsyncImport(args);
@@ -106,10 +116,6 @@ else if (args.Contains("--domain2"))
 else if (args.Contains("--domain3"))
 {
     RunOrderStatusDemo();
-}
-else if (args.Contains("--storage") || args.Contains("--cache") || args.Contains("--search") || args.Length == 0)
-{
-    RunStorageDemo(args);
 }
 else if (args.Contains("--events"))
 {
@@ -148,11 +154,21 @@ else
 }
 
 
+static string ResolveDemoDataPath(string? relativeOrAbsolute, string defaultFileName)
+{
+    string path = relativeOrAbsolute ??
+        Path.Combine(AppContext.BaseDirectory, "data", defaultFileName);
+
+    return Path.GetFullPath(Path.IsPathRooted(path)
+        ? path
+        : Path.Combine(AppContext.BaseDirectory, path));
+}
+
 static async Task RunAsyncImport(string[] args)
 {
-    string dataPath = args
-        .FirstOrDefault(arg => !arg.StartsWith("--"))
-        ?? Path.Combine("data", "sample.json");
+    string dataPath = ResolveDemoDataPath(
+        args.FirstOrDefault(arg => !arg.StartsWith("--")),
+        "sample.json");
 
     var service = new LendingService(new InMemoryBookStore());
     using var userCts = new CancellationTokenSource();
@@ -321,7 +337,8 @@ static void RunReport(string command)
 
 static void RunStorageDemo(string[] args)
 {
-    IBookStore store = StoreFactory.Create(args);
+    string configuredFilePath = ConfigurationLoader.Load(args).DataFilePath;
+    IBookStore store = StoreFactory.Create(args, configuredFilePath);
     var service = new LendingService(store);
 
     Console.WriteLine($"Сховище: {store.GetType().Name}");
@@ -394,10 +411,14 @@ static void RunStorageDemo(string[] args)
     }
 
     Console.WriteLine();
-    TryDo("Пошук неіснуючого примірника", () => service.IssueCopy(copy.Id, "R-002", DateTime.Today.AddDays(14)));
+    TryDo("Пошук неіснуючого примірника", () =>
+        service.IssueCopy("COPY-MISSING", "R-002", DateTime.Today.AddDays(14)));
 
     if (args.Contains("--file"))
-        Console.WriteLine($"\nФайл даних: {Path.Combine(AppContext.BaseDirectory, "data", "catalog.json")}");
+    {
+        Console.WriteLine();
+        Console.WriteLine($"Файл даних: {configuredFilePath}");
+    }
 }
 
 static void RunDomainDemo()
@@ -693,7 +714,7 @@ static void RunSinkDemo()
 
 static void RunImportReportDemo()
 {
-    string path = Path.Combine("data", "sample.csv");
+    string path = ResolveDemoDataPath(null, "sample.csv");
 
     ImportResult<BookDto> result = BookCsvImporter.Load(
         path,
@@ -926,6 +947,7 @@ sealed class ConsoleImportProgress : IProgress<int>
         }
 
         _lastPercent = percent;
-        Console.Write($"\rІмпорт: {percent,3}%");
+        Console.Write((char)13);
+        Console.Write($"Імпорт: {percent,3}%");
     }
 }
