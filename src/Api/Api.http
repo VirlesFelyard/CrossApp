@@ -1,0 +1,80 @@
+@host = http://localhost:5080
+@id = PASTE_ID_FROM_POST
+
+GET {{host}}/api/books
+
+###
+GET {{host}}/api/books?author=Шевченко
+
+###
+GET {{host}}/api/books/{{id}}
+
+###
+POST {{host}}/api/books
+Content-Type: application/json
+
+{
+  "isbn": "978-617-123-456",
+  "title": "Тестова книга",
+  "author": "Тестовий автор",
+  "year": 2024,
+  "copies": 2
+}
+
+###
+PUT {{host}}/api/books/{{id}}
+Content-Type: application/json
+
+{
+  "isbn": "978-617-123-456",
+  "title": "Оновлена книга",
+  "author": "Тестовий автор",
+  "year": 2025,
+  "copies": 3
+}
+
+###
+PUT {{host}}/api/books/{{id}}
+Content-Type: application/json
+
+{
+  "isbn": "978-617-123-456",
+  "title": "",
+  "author": "Тестовий автор",
+  "year": 2025,
+  "copies": 3
+}
+
+###
+POST {{host}}/api/books
+Content-Type: application/json
+
+{
+  "isbn": "",
+  "title": "",
+  "author": "",
+  "year": 1000,
+  "copies": -1
+}
+
+###
+POST {{host}}/api/books
+Content-Type: application/json
+
+{
+  "isbn": "978-617-123-456",
+  "title": "Книга",
+  "author": "Автор",
+  "year": 2024,
+  "copies": "abc"
+}
+
+###
+POST {{host}}/api/books
+Content-Type: application/json
+
+###
+DELETE {{host}}/api/books/{{id}}
+
+###
+GET {{host}}/api/books/{{id}}

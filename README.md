@@ -6,6 +6,45 @@
 
 Призначення: облік примірників книг, читачів, їх видачі та повернення.
 
+
+### Запуск  API
+
+```bash
+dotnet run --project src/Api -f net10.0 -- --urls http://localhost:5080
+```
+
+### Приклади curl
+
+**GET - список книг:**
+
+```bash
+curl -i http://localhost:5080/api/books
+```
+
+**POST - створення книги:**
+
+```bash
+curl -i -X POST http://localhost:5080/api/books \
+  -H "Content-Type: application/json" \
+  -d '{"isbn":"9786171234567","title":"Тестова книга","author":"Тестовий автор","year":2024,"copies":2}'
+```
+
+**PUT - оновлення книги:**
+
+```bash
+curl -i -X PUT http://localhost:5080/api/books/BOOK_ID \
+  -H "Content-Type: application/json" \
+  -d '{"isbn":"9786171234567","title":"Оновлена книга","author":"Тестовий автор","year":2024,"copies":3}'
+```
+
+**DELETE - видалення книги:**
+
+```bash
+curl -i -X DELETE http://localhost:5080/api/books/BOOK_ID
+```
+
+`BOOK_ID` - ідентифікатор книги, отриманий після POST.
+
 ## Профілі
 
 | Профіль | Рівень логування | Каталог даних |
