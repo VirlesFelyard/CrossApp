@@ -7,6 +7,9 @@ GET {{host}}/api/books
 GET {{host}}/api/books?author=Шевченко
 
 ###
+GET {{host}}/api/books?page=1&pageSize=20&search=Кобзар
+
+###
 GET {{host}}/api/books/{{id}}
 
 ###

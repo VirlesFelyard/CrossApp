@@ -14,3 +14,5 @@ public sealed record BookDto(
         new(entry.Book.Id, entry.Book.Isbn, entry.Book.Title,
             entry.Book.Author ?? string.Empty, entry.Book.Year, entry.Copies);
 }
+
+public sealed record PagedBooksResponse(BookDto[] Items, int Total);
