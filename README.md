@@ -6,6 +6,28 @@
 
 Призначення: облік примірників книг, читачів, їх видачі та повернення.
 
+## База даних
+
+База даних SQLite зберігається у файлі `data/app.db`.
+
+Ключ конфігурації: `ConnectionStrings:AppDb`.
+
+Значення за замовчуванням:
+`Data Source=data/app.db`
+
+### Міграції
+
+Створення міграції:
+dotnet ef migrations add InitialCreate --project src/Infrastructure --startup-project src/Api
+
+Застосування міграцій:
+dotnet ef database update --project src/Infrastructure --startup-project src/Api
+
+### Скидання бази даних
+
+1. Зупинити API.
+2. Видалити файл `data/app.db`.
+3. Виконати команду `dotnet ef database update --project src/Infrastructure --startup-project src/Api`.
 
 ### Запуск  API
 
